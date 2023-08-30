@@ -8,6 +8,7 @@ Machine Learning Neural Network
   - delete column if too much data missing
  
 #FORWARD PROPAGATION
+
     # First layer
     Z[1] = W[1] x X + B[1]
     A[1] = 1 / (1 + exp(-Z[1]))
