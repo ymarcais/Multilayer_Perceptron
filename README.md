@@ -34,4 +34,6 @@ Calculation partiale derivative derivative with respect to W[2] && derivative wi
   ∂Z[1] = W[2].T x ∂Z[2] x (A[1] x (1 - A[1])) # multiplication terme a terme C = A * B qui n est pas une multiplication matricielle
   ∂L / ∂W[1] = (1 / m) x ∂Z[1] x X.T
   ∂L / ∂B[1] = (1 / m) x sum(∂Z[1])
+
+  
     
