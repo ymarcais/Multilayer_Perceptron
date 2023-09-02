@@ -25,7 +25,8 @@
     Z[c] = W[c] x A[c - 1] + b[c]
     A[c] = 1 / (1 + exp(-Z[c]))
 
-    # Binary cross-entropy error functionLog loss
+    # Binary cross-entropy error functionLog loss 
+      with epsilon used to avoid overflows
     L = (-1 / N) x sum( Ylog(A[2]) + (1 - Y)log(1 - A[2]))
     with Y(n) from n = 1 to n = N
 
