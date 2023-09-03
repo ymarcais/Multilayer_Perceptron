@@ -31,6 +31,8 @@
     with Y(n) from n = 1 to n = N
 
 #BACK PROPAGATION
+  Trace how the cost function evolves from the last layer model to the first
+  
   # Calculation partiale derivative derivative with respect to W[2] && derivative with respect to B[2] 
     ∂Z[2] = (∂L / ∂A[2]) x (∂A[2] / ∂Z[2])
         (∂L / ∂A[2]) = (1 / m) x sum(((-Y / A[2]) + ((1 - y) / (1 - A[2]))))
