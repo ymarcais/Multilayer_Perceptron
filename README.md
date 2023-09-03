@@ -3,9 +3,14 @@
     Multi hidden layers
     Back Propagation Neural Network
   
-  - data_processing package
+  - Data_processing package
     - replace NaN by median
     - delete column if too much data missing
+  - Forward propagation
+    - Initialisation
+    - Vectorization
+    - Activation
+  - Back propagation  
    
 #SOFTMAX
     
