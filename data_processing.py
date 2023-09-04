@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 import sys
 import os
-
 lib_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib_py'))
 sys.path.append(lib_py_path)
 from stats import Statistician
@@ -49,6 +49,13 @@ class Data_processing:
 			dataset[column].fillna(median, inplace=True)
 		return dataset
 	
+	#normalize 
+	def normalizator(self, dataset):
+		scaler = StandardScaler()
+		scaler.fit(dataset)
+		normalized_dataset = scaler.transform(dataset)
+		return normalized_dataset
+	
 	# split dataset with random (80% for training set and 20% for test set)
 	def random_data_split(self, dataset):
 		train_df=[]
@@ -71,8 +78,9 @@ class Data_processing:
 		print("train_df shape :", x, "X", y)
 		return train_df, test_df
 
-	def save_to_csv(self, data_path, train_data_path, test_data_path):
-		train_df, test_df = self.random_data_split(data_path)
+	#save file
+	def save_to_csv(self, normalized_dataset, train_data_path, test_data_path):
+		train_df, test_df = self.random_data_split(normalized_dataset)
 		train_df = pd.DataFrame(train_df)
 		test_df = pd.DataFrame(test_df)
 		train_df.to_csv(train_data_path, index=False)
@@ -86,8 +94,9 @@ def	main():
 	test_data_path = "test_data_path.csv"
 	dataset = dp.get_data(data_path)
 	dataset = dp.replace_nan_to_median(dataset)
+	normalized_dataset = dp.normalizator(dataset)
 	print(dataset[:])
-	#dp.save_to_csv(data_path, train_data_path, test_data_path)
+	dp.save_to_csv(normalized_dataset, train_data_path, test_data_path)
 
 if	__name__ == "__main__":
 	main()
