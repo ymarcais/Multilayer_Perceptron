@@ -85,6 +85,8 @@ class Data_processing:
 		train_df.to_csv(train_data_path, index=False)
 		test_df.to_csv(test_data_path, index=False)
 
+	#
+
 def	main():
 	st = Statistician()
 	dp = Data_processing(st)	
