@@ -9,7 +9,6 @@ lib_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib
 sys.path.append(lib_py_path)
 from stats import Statistician
 
-
 @dataclass
 class Data_processing:
 	st: Statistician
