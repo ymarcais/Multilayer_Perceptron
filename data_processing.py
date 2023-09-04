@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from sklearn.model_selection import train_test_split
 import sys
 import os
-
 lib_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib_py'))
 sys.path.append(lib_py_path)
 from stats import Statistician
