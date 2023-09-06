@@ -40,19 +40,32 @@ class Data_processing:
 			median = self.st.quartil(buff_no_NaN, 50)
 		return median
 		
-	#replace NaN by median value
+	#replace NaN by median value, 'M':1 and 'B':0
 	def replace_nan_to_median(self, dataset):
-		for column in dataset.columns:
-			median = self.get_median(dataset, column)
-			#dataset[column] = dataset[column].fillna(median)
-			dataset[column].fillna(median, inplace=True)
-		return dataset
+		diag = {'M': 1, 'B': 0}
+		dataset_01 = pd.DataFrame()
+		dataset_01 = dataset.iloc[:, 1:].copy()
+		for column in dataset_01.columns:
+			median = self.get_median(dataset_01, column)
+			dataset_01[column].fillna(median, inplace=True)
+		new_dataset = dataset_01.replace(diag)
+					
+		print("dataset_01", new_dataset)
+		return new_dataset
 	
-	#normalize 
 	def normalizator(self, dataset):
+		normalized_dataset = pd.DataFrame(dataset)
+		bm_column = normalized_dataset.iloc[:, 0]
+		
+		normalized_dataset = normalized_dataset.iloc[:, 1:]
 		scaler = StandardScaler()
-		scaler.fit(dataset)
-		normalized_dataset = scaler.transform(dataset)
+		scaler.fit(normalized_dataset)
+
+		normalized_data = scaler.transform(normalized_dataset)
+		columns = normalized_dataset.columns  # Get the column names before transformation
+
+		normalized_dataset = pd.DataFrame(data=normalized_data, columns=columns)
+		normalized_dataset.insert(0, 'B / M', bm_column)
 		return normalized_dataset
 	
 	# split dataset with random (80% for training set and 20% for test set)
@@ -60,15 +73,17 @@ class Data_processing:
 		train_df=[]
 		test_df=[]
 
+		df = pd.DataFrame(dataset)
+		#print("pandas df:", df)
 		x = dataset.shape[0]
 		y = dataset.shape[1]
 		print("data shape :", x, "X", y)
 		random_figures = np.random.choice([1, 0], size=x, p=[0.8, 0.2])
 		for i in range(x):
 			if random_figures[i] == 1:
-				train_df.append(dataset.iloc[i])
+				train_df.append(df.iloc[i])
 			else:
-				test_df.append(dataset.iloc[i])
+				test_df.append(df.iloc[i])
 		x = len(train_df)
 		y = len(train_df[0])
 		print("train_df shape :", x, "X", y)
@@ -85,18 +100,16 @@ class Data_processing:
 		train_df.to_csv(train_data_path, index=False)
 		test_df.to_csv(test_data_path, index=False)
 
-	#
-
 def	main():
 	st = Statistician()
 	dp = Data_processing(st)	
 	data_path = "data.csv"
-	train_data_path = "train_data_path.csv"
-	test_data_path = "test_data_path.csv"
+	train_data_path = "train_data.csv"
+	test_data_path = "test_data.csv"
 	dataset = dp.get_data(data_path)
 	dataset = dp.replace_nan_to_median(dataset)
 	normalized_dataset = dp.normalizator(dataset)
-	print(dataset[:])
+	#print(dataset[:])
 	dp.save_to_csv(normalized_dataset, train_data_path, test_data_path)
 
 if	__name__ == "__main__":
