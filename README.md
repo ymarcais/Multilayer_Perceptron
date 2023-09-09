@@ -5,6 +5,7 @@
   
   - Data_processing package
     - replace NaN by median
+    - replace 'B' and 'M' string by 0 1
     - delete column if too much data missing
   - Forward propagation
     - Initialisation
