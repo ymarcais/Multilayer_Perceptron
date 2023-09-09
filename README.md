@@ -1,4 +1,4 @@
-#Multilayer_Perceptron
+#Multilayer_Perceptron : accuracy 30%
   Machine Learning Neural Network
     Multi hidden layers
     Back Propagation Neural Network
