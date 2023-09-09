@@ -65,7 +65,7 @@ class Data_processing:
 		columns = normalized_dataset.columns  # Get the column names before transformation
 
 		normalized_dataset = pd.DataFrame(data=normalized_data, columns=columns)
-		normalized_dataset.insert(0, 'B / M', bm_column)
+		normalized_dataset.insert(0, 0, bm_column)
 		return normalized_dataset
 	
 	# split dataset with random (80% for training set and 20% for test set)
@@ -109,7 +109,6 @@ def	main():
 	dataset = dp.get_data(data_path)
 	dataset = dp.replace_nan_to_median(dataset)
 	normalized_dataset = dp.normalizator(dataset)
-	#print(dataset[:])
 	dp.save_to_csv(normalized_dataset, train_data_path, test_data_path)
 
 if	__name__ == "__main__":
