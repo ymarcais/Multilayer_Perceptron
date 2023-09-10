@@ -13,7 +13,8 @@
     - Activation
   - Back propagation  
    
-#SOFTMAX
+#SOFTMAX 
+
     
     # softmax(z) = exp(zi) / Σj(exp(zj))
  
