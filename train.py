@@ -24,21 +24,31 @@ def local_bar_processing(func):
 class Multilayer:
     
     # Initialisation 
-    def initialisation(self, dimensions):
+    def initialisation(self, X, dimensions):
         parametres = {}
         C = len(dimensions)
         print("dimensions:", dimensions)
 
         np.random.seed(1)
 
-        for k in range(1,  C-1):
-            parametres['W' + str(k)] = np.random.randn(dimensions[k], dimensions[k-1])
-            parametres['b' + str(k)] = np.random.randn(dimensions[k], 1)
-            print("k:",k)
-            print(f"W{k}:", parametres['W' + str(k)].shape)
-            print(f"b{k}:", parametres['b' + str(k)].shape)
-        parametres['W' + str(C-1)] = np.random.randn(dimensions[C-1], dimensions[1])
-        parametres['b' + str(C-1)] = np.random.randn(dimensions[C-1], 1)
+        for k in range(1, C):
+            if k == 1:
+                parametres['W' + str(k)] = np.random.randn(X.shape[1], dimensions[k])
+                parametres['b' + str(k)] = np.random.randn(dimensions[k-1], 1)
+                print("k:",k)
+                print(f"W{k}:", parametres['W' + str(k)].shape)
+                print(f"b{k}:", parametres['b' + str(k)].shape)
+                print(f"b{k}",parametres['b' + str(k)].shape)
+            elif k < C - 1:
+                parametres['W' + str(k)] = np.random.randn(dimensions[k], dimensions[k-1])
+                parametres['b' + str(k)] = np.random.randn(X.shape[0], 1)
+                print(f"b{k}",parametres['b' + str(k)].shape)
+            else:
+                parametres['W' + str(C-1)] = np.random.randn(dimensions[1], dimensions[C-1])
+                parametres['b' + str(C-1)] = np.random.randn(X.shape[0], 1)
+                print(f"W{k}:", parametres['W' + str(k)].shape)
+                print(f"b{k}:", parametres['b' + str(k)].shape)
+                print(f"b{k}",parametres['b' + str(k)].shape)
             
             #print("parametres:", parametres)
         return parametres
@@ -75,7 +85,7 @@ class Multilayer:
             #print(f"b{c}:", parametres['b' + str(c)].shape)
             #Z = (parametres['W' + str(c)].dot(activations['A' + str(c - 1)])) + parametres['b' + str(c)]
             #Z = (activations['A' + str(c - 1)]).dot(parametres['W' + str(c)].T) + parametres['b' + str(c)].T
-            Z = parametres['W' + str(c)].dot(activations['A' + str(c - 1)]) + parametres['b' + str(c)]
+            Z = activations['A' + str(c - 1)].dot(parametres['W' + str(c)]) + parametres['b' + str(c)]
             print(f"Z{c}:", Z.shape, f"W{c}", parametres['W' + str(c)].shape, f"[A{c - 1}", activations['A' + str(c - 1)].shape)
             #activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
             #activations['A' + str(c)] = self.my_softmax(Z)
@@ -91,6 +101,7 @@ class Multilayer:
                 #print(f"W{c}:", parametres['W' + str(c)].shape)
                 #activations['A' + str(c)] = self.relu(Z)
                 activations['A' + str(c)] = self.my_softmax(Z)
+                #print("activation with softmax:", activations['A' + str(c)].shape)
                 #activations['A' + str(c)] = (activations['A' + str(c)] > 0.5).astype(int)
                 #print(activations['A' + str(c)])
                 #print("Z{c}:", Z.shape)
@@ -116,18 +127,34 @@ class Multilayer:
         for c in reversed(range(1, C+1)):
             #print("c:",c)
             #print("// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
-            gradients['dW' + str(c)] = 1 / m * np.dot(dZ, activations['A' + str(c - 1)].T)
-            #print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
-            gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)
+            if c == C:
+                #print("C:", C)
+                #print("c:", c)
+                gradients['dW' + str(c)] = 1 / m * np.dot(activations['A' + str(c - 1)].T, dZ)
+                print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
+                gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)
+            elif c < C and c > 1:
+                #print("C:", C)
+                #print("c:", c)
+                gradients['dW' + str(c)] = 1 / m * np.dot(activations['A' + str(c - 1)].T, dZ)
+                print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
+                gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)
+            else:
+                #print("C:", C)
+                #print("c:", c)
+                gradients['dW' + str(c)] = 1 / m * np.dot(activations['A' + str(c - 1)].T, dZ)
+                print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
+                gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)                
+
             if c > 1:
                 #print(f"Wc:", (parametres['W' + str(c)].T).shape, "// dZ:", dZ.shape)
-                print("A c - 1:", activations['A' + str(c - 1)].shape)
+                #print("A c - 1:", activations['A' + str(c - 1)].shape)
                 #a_terme = activations['A' + str(c - 1)].T * (1 - activations['A' + str(c - 1)].T)
                 #print("A terme:", a_terme.shape)
                 #toto = np.dot(parametres['W' + str(c)].T, dZ.T)
                 #print("toto:", toto.shape)
                 #multiplication matricielle entre dW et dZ et multiplications de terme a terme avec A et (1 - A)
-                dZ = np.dot(parametres['W' + str(c)].T, dZ) * activations['A' + str(c - 1)] * (1 - activations['A' + str(c - 1)])
+                dZ = np.dot(dZ,parametres['W' + str(c)].T) * activations['A' + str(c - 1)] * (1 - activations['A' + str(c - 1)])
                 #print("dZ toto:", dZ.shape)
         return gradients
     
@@ -136,10 +163,22 @@ class Multilayer:
         C = len(parametres) // 2
 
         for c in range(1, C+1):
-            print(f"W{c}:", parametres['W' + str(c)].shape, "// dW{c}", gradients['dW' + str(c)].shape)
-            parametres['W' + str(c)] += - learning_rate *gradients['dW' + str(c)]
-            #print(f"b{c}:", parametres['b' + str(c)].shape, "// db{c}", gradients['db' + str(c)].shape)
-            parametres['b' + str(c)] += - learning_rate *gradients['db' + str(c)]
+            if c == 1:
+                print("C update:", C)
+                print("c update:", c)
+                print(f"W{c}:", parametres['W' + str(c)].shape, f"// dW{c}", gradients['dW' + str(c)].shape)
+                parametres['W' + str(c)] += - learning_rate *gradients['dW' + str(c)]
+                print(f"b{c}:", parametres['b' + str(c)].shape, "// db{c}", gradients['db' + str(c)].shape)
+                parametres['b' + str(c)] += - learning_rate *gradients['db' + str(c)]
+            elif c > 1:
+                print("C update:", C)
+                print("c update:", c)
+                print("learning_rate:", learning_rate)
+                print(f"W{c}:", parametres['W' + str(c)].shape, f"// dW{c}", gradients['dW' + str(c)].shape)
+                parametres['W' + str(c)] += - learning_rate * gradients['dW' + str(c)]
+                print(f"b{c}:", parametres['b' + str(c)].shape, "// db{c}", gradients['db' + str(c)].shape)
+                parametres['b' + str(c)] += - learning_rate *gradients['db' + str(c)]
+
         return parametres
     
     # binary cross-entropy error function
@@ -153,18 +192,20 @@ class Multilayer:
     def predict(self, X, parametres):
         activations = self.forward_propagation(X, parametres)
         C = len(parametres) // 2
-        Af = activations['A' + str(C)]
-        return Af >= 0.5
+        Af = np.mean(activations['A' + str(C)], axis=1, keepdims=True)
+        Af = (Af > 0.5).astype(int)
+        print("Af:", Af.shape)
+        print("Af:", Af)
+        return Af
     
     #New way to calculate accuracy
     def my_accuracy(self, y, y_predict):
-        y_predict = y_predict
         #print("y_predic", y_predict.shape)
         correct_matches = np.sum(y == y_predict)
         #print("y_predict", y_predict)
         total_samples = len(y)
         #print("len y:", len(y))
-        my_accuracy = correct_matches / total_samples
+        my_accuracy = 100 * correct_matches / total_samples
         return my_accuracy
     
      #calculate accuracy in multilabel classification
@@ -244,13 +285,16 @@ class Multilayer:
 
     def plot_presentation(self, training_history):
 
+        final_row = training_history[-1]
+        final_value = final_row[-1]
         plt.figure(figsize=(12, 4))
         plt.subplot(1, 2, 1)
         plt.plot(training_history[:, 0], label='train loss')
         plt.legend()
         plt.subplot(1, 2, 2)
         plt.plot(training_history[:, 1], label='train acc')
-        plt.legend()
+        plt.title(f"Train accuracy reaches: {final_value:.2f}%")
+
         plt.show()
     
 def main():
@@ -269,7 +313,7 @@ def main():
     #print("dimensions shape [0]:",y.shape[0])
     #print("dimensions shape [1]:",y.shape[1])
     #print("dimensions:", dimensions)
-    parametres = ml.initialisation(dimensions)
+    parametres = ml.initialisation(X, dimensions)
     training_history = ml.neural_network(X, y, parametres, learning_rate, n_iter)
     ml.plot_presentation(training_history)
 
