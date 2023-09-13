@@ -40,7 +40,7 @@
 #BACK PROPAGATION
   Trace how the cost function evolves from the last layer model to the first
   
-  # Calculation partiale derivative derivative with respect to W[2] && derivative with respect to B[2] 
+  #Calculation partiale derivative derivative with respect to W[2] && derivative with respect to B[2] 
     Z[1] = W[1].X + b[1]    (n1, n0) x (n0, m) + (n1, 1) // With boradcasting effect (n1, 1) becomes (n1, m)
     
     ∂Z[2] = (∂L / ∂A[2]) x (∂A[2] / ∂Z[2])
@@ -58,6 +58,18 @@
     ∂Z[c-1] = W[c].T x ∂Z[c] x (A[c-1] x (1 - A[c-1])) 
     ∂L / ∂W[c] = (1 / m) x ∂Z[c] x A[c-1].T
     ∂L / ∂b[c] = (1 / m) x sum(∂Z[c])
+
+  #F1_Accuracy
+
+    cls for [0, 1]
+    true_positives = np.sum((y == cls) & (y_prediction == cls))
+    false_positives = np.sum((y != cls) & (y_prediction == cls))
+    false_negatives = np.sum((y == cls) & (y_prediction != cls))
+
+    # Calculate precision and recall for the current class
+    precision = true_positives / (true_positives + false_positives + 1e-10)
+    recall = true_positives / (true_positives + false_negatives + 1e-10)
+    f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
 
   
     
