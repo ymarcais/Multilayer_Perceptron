@@ -100,10 +100,10 @@ class Multilayer:
                 #print(activations['A' + str(c)])
                 #activations['A' + str(c)] = np.sum(activations['A' + str(c)])
             else:
-                #activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
+                activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
                 #print(f"W{c}:", parametres['W' + str(c)].shape)
                 #activations['A' + str(c)] = self.relu(Z)
-                activations['A' + str(c)] = self.my_softmax(Z)
+                #activations['A' + str(c)] = self.my_softmax(Z)
                 #print("activation with softmax:", activations['A' + str(c)].shape)
                 #activations['A' + str(c)] = (activations['A' + str(c)] > 0.5).astype(int)
                 #print(activations['A' + str(c)])
@@ -231,9 +231,13 @@ class Multilayer:
         return my_accuracy
     
      #calculate accuracy in multilabel classification
-    '''def f1_score(self, y, y_pred):
+    def f1_score(self, y, y_pred):
         # Get the unique class labels
+        y_prediction = np.array([y_pred[0,:]])
+        print("y:", y.shape)
+        print("y_predict:", y_prediction.shape)
         unique_classes = np.unique(np.concatenate((y, y_pred)))
+        print("unique_classes", unique_classes)
 
         # Initialize arrays to store precision, recall, and f1-score for each class
         precision_scores = []
@@ -243,9 +247,9 @@ class Multilayer:
         # Iterate over each class
         for cls in unique_classes:
             # Compute true positives, false positives, and false negatives for the current class
-            true_positives = np.sum((y == cls) & (y_pred == cls))
-            false_positives = np.sum((y != cls) & (y_pred == cls))
-            false_negatives = np.sum((y == cls) & (y_pred != cls))
+            true_positives = np.sum((y == cls) & (y_prediction == cls))
+            false_positives = np.sum((y != cls) & (y_prediction == cls))
+            false_negatives = np.sum((y == cls) & (y_prediction != cls))
 
             # Calculate precision and recall for the current class
             precision = true_positives / (true_positives + false_positives + 1e-10)
@@ -254,22 +258,22 @@ class Multilayer:
             # Calculate the F1-score for the current class
             f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
 
+
             # Append the scores to the respective lists
             precision_scores.append(precision)
             recall_scores.append(recall)
             f1_scores.append(f1)
 
-        # Calculate the overall F1-score (macro-average)
-        macro_f1_score = np.mean(f1_scores)
+        macro_precision = 100 *np.mean(precision_scores)
+        macro_recall = 100 *np.mean(recall_scores)
+        macro_f1_score = 100 * np.mean(f1_scores)
 
-        return macro_f1_score'''
+        return macro_f1_score, macro_recall, macro_precision
 
    
     #@local_bar_processing
     def neural_network(self, X, y, parametres, learning_rate, n_iter):
-        train_loss = []
-        train_acc = []
-        
+
         #dimensions = list(hidden_layers)
         #dimensions.insert(0, X.shape[0])
         #print("X[1]", X.shape[0])
@@ -295,44 +299,64 @@ class Multilayer:
             #print("y_pred:", y_pred.shape)
             training_history[i, 1] = (self.my_accuracy(y, y_pred))
 
-            '''if i% 10 == 0:
-                C = len(parametres) // 2
-                train_loss.append(self.log_loss(y, activations['A' + str(C)]))
-                y_pred = self.predict(X, parametres)
-                #print("y_pred:", y_pred)
-                current_accuracy = self.my_accuracy(y, y_pred)
-                #print("accuracy:", current_accuracy)
-                train_acc.append(current_accuracy)'''
-        #print("training acc", training_history[-1, 1])
         return training_history, parametres
+    
 
+    #plot colors
     def plot_format(self):
         plt.gca().spines['bottom'].set_color('blue')
         plt.gca().spines['top'].set_color('blue')
         plt.gca().spines['right'].set_color('blue')
         plt.gca().spines['left'].set_color('blue')
-        plt.tick_params(axis='both', colors='blue')    
+        plt.tick_params(axis='both', colors='blue')
+
+
+    # plot legend parameters
+    def plot_legend(self, len_dimensions, f1_accuracy):
+        label_lines =   [
+            f"{len_dimensions} layers \n"
+            f"F1_score: {f1_accuracy['macro_f1_score']:.2f}% \n"
+            f"Recall: {f1_accuracy['macro_recall']:.2f}% \n"
+            f"Precision: {f1_accuracy['macro_precision']:.2f}% \n"
+            f"Test_accuracy: {f1_accuracy['test_accuracy']:.2f}% \n"
+                       ]
+        #legend_label = f"{len_dimensions} layers \n"
+        legend = plt.legend(label_lines,loc='center left', bbox_to_anchor=(1.0, 0.5), borderpad=1)
+        legend.get_frame().set_linewidth(0)  # Adjust the legend box border width
+        #legend.get_frame().set_edgecolor('black')  # Set the legend box border color
+        legend.get_frame().set_facecolor('lightblue')  # Set the legend box background color
+        legend.get_frame().set_alpha(0.3)
+        for text in legend.get_texts():
+            text.set_fontsize(10)  # Adjust the legend font size
+            text.set_color('blue')
+
     
-    def plot_presentation(self, training_history, test_accuracy):
+    #plot double charts
+    def plot_presentation(self, training_history, f1_accuracy, len_dimensions):
         final_row = training_history[-1]
         final_value = final_row[-1]
-        title_lines = [
-		f"Training set accuracy: {final_value:.2f}%\n"
-        f"Test set accuracy : {test_accuracy:.2f}%"]
+        title_lines =   [
+		f"Training set accuracy: {final_value:.2f}%"
+        #f"Test set accuracy : {f1_accuracy['test_accuracy']:.2f}%"
+                        ]
         title = '\n'.join(title_lines)
 
         plt.figure(figsize=(12, 4))
         plt.subplot(1, 2, 1)
+        plt.subplots_adjust(left=0.05)
         plt.plot(training_history[:, 0], label='train loss', color='red', linewidth=3)
         plt.title(f"Training set cost loss:", color='blue')
         self.plot_format()
 
         plt.subplot(1, 2, 2)
+        plt.subplots_adjust(right=0.80)
         plt.plot(training_history[:, 1], label='train acc', color='red', linewidth=3)
         plt.title(title, color='blue')
         self.plot_format()
+        self.plot_legend(len_dimensions, f1_accuracy)        
 
         plt.show()
+
     
 def main():
 
@@ -341,22 +365,28 @@ def main():
     test_data_path = "test_data.csv"
     y_train, X_train = ml.get_y_X(train_data_path)
     y_test, X_test = ml.get_y_X(test_data_path)
+    f1_accuracy = {}
 
     learning_rate = 0.01
-    n_iter = 1100
+    n_iter = 5000
     input_layer = [X_train.shape[0]]
-    hidden_layers = [50, 50]
+    hidden_layers = [50, 50, 50, 50, 50]
     out_put_layer = [2]
     dimensions = input_layer + hidden_layers + out_put_layer
-
+    len_dimensions = len(dimensions)
     parametres = ml.initialisation(X_train, dimensions)
     training_history, parametres = ml.neural_network(X_train, y_train, parametres, learning_rate, n_iter)
     input_layer = [X_test.shape[0]]
     dimensions = input_layer + hidden_layers + out_put_layer
     y_test_predict = ml.predict(X_test, parametres)
     test_accuracy = ml.my_accuracy(y_test, y_test_predict)
+    macro_f1_score, macro_recall, macro_precision = ml.f1_score(y_test, y_test_predict)
+    f1_accuracy['macro_f1_score'] = macro_f1_score
+    f1_accuracy['macro_recall'] = macro_recall
+    f1_accuracy['macro_precision'] = macro_precision
+    f1_accuracy['test_accuracy'] = test_accuracy
     print("test_accuracy:", test_accuracy)
-    ml.plot_presentation(training_history, test_accuracy)
+    ml.plot_presentation(training_history, f1_accuracy, len_dimensions)
 
   
     '''X = X / np.sum(X)
