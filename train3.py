@@ -23,11 +23,10 @@ def local_bar_processing(func):
 @dataclass
 class Multilayer:
     
-    # Initialisation 
+    '''Initialisation : dictionary for W: 'Weights' and b: 'bias' '''
     def initialisation(self, X, dimensions):
         parametres = {}
         C = len(dimensions)
-        #print("dimensions:", dimensions)
 
         np.random.seed(1)
 
@@ -35,209 +34,103 @@ class Multilayer:
             if k == 1:
                 parametres['W' + str(k)] = np.random.randn(dimensions[k], X.shape[0])
                 parametres['b' + str(k)] = np.random.randn(dimensions[k], 1)
-                #print("X.shape[1]:", X.shape[1])
-                #print("k:",k)
-                #print(f"W{k}:", parametres['W' + str(k)].shape)
-                #print(f"b{k}:", parametres['b' + str(k)].shape)
-            elif k < C - 1:
+            else:
                 parametres['W' + str(k)] = np.random.randn(dimensions[k], dimensions[k-1])
                 parametres['b' + str(k)] = np.random.randn(dimensions[k], 1)
-                #print("k:",k)
-                #print("dimension[1]:", dimensions[1])
-                #print(f"b{k}",parametres['b' + str(k)].shape)
-            else:
-                parametres['W' + str(C-1)] = np.random.randn(dimensions[C-1], dimensions[k-1])
-                parametres['b' + str(C-1)] = np.random.randn(dimensions[C-1], 1)
-                #print("dimension[1]:", dimensions[1])
-                #print(f"W{k}:", parametres['W' + str(k)].shape)
-                #print(f"b{k}:", parametres['b' + str(k)].shape)
-            
-            #print("parametres:", parametres)
         return parametres
     
-    #get y and X from train.csv
+    #get_y_X take train csv file path and retur X.T the input dataset and y the output dataset
     def get_y_X(self, train_data_path):
         dataset = pd.read_csv(train_data_path, header=None)
         y = pd.DataFrame(dataset.iloc[2:, 0]).values
         y = y.reshape(1, -1)
         X = pd.DataFrame(dataset.iloc[2:, 1:]).values
-        #print("y shape begins:", y.shape)
         return y, X.T
     
-    # Softmax function activation with (X - np.max(X) for better stability
+    # my_softmax function activation with X as input dataset and returns output probabilities
     def my_softmax(self, X):
         exp_x = np.exp(X - np.max(X, axis=0, keepdims=True)) # keepdims -> broadcasting
         return exp_x / np.sum(exp_x, axis=0, keepdims=True)
     
+    # ReLU is an activation function if the input value is greater than zero, it passes through unchanged; otherwise, it becomes zero
     def relu(self, X):
-        return np.max(X, 0)
+        return np.maximum(0, X)
   
     # C = numero de la couche finale
     def forward_propagation(self, X, parametres):
-        #print("X shape", X.shape)
         activations = {'A0' : X}
-
-        #print("X shape:", activations['A0'].shape)
-
         C = len(parametres) // 2
-        #print("len parametres:", len(parametres))            
         for c in range(1, C + 1):
-            #print(f"W{c}:", parametres['W' + str(c)].shape)
-            #print(f"X.T shape{c}", X.shape)
-            #print(f"A{c-1}:", activations['A' + str(c - 1)].shape)
-            #print(f"b{c}:", parametres['b' + str(c)].shape)
-            #Z = (parametres['W' + str(c)].dot(activations['A' + str(c - 1)])) + parametres['b' + str(c)]
-            #Z = (activations['A' + str(c - 1)]).dot(parametres['W' + str(c)].T) + parametres['b' + str(c)].T
             Z = parametres['W' + str(c)].dot(activations['A' + str(c - 1)]) + parametres['b' + str(c)]
-            #print(f"Z{c}:", Z.shape, f"W{c}", parametres['W' + str(c)].shape, f"[A{c - 1}", activations['A' + str(c - 1)].shape)
-            #activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
-            #activations['A' + str(c)] = self.my_softmax(Z)
             if c == C - 1:
-                #print("C:", C)
                 activations['A' + str(c)] = self.my_softmax(Z)
                 #activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
-                #activations['A' + str(c)] = (activations['A' + str(c)] > 0.5).astype(int)
-                #print(activations['A' + str(c)])
-                #activations['A' + str(c)] = np.sum(activations['A' + str(c)])
             else:
                 activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
-                #print(f"W{c}:", parametres['W' + str(c)].shape)
                 #activations['A' + str(c)] = self.relu(Z)
                 #activations['A' + str(c)] = self.my_softmax(Z)
-                #print("activation with softmax:", activations['A' + str(c)].shape)
-                #activations['A' + str(c)] = (activations['A' + str(c)] > 0.5).astype(int)
-                #print(activations['A' + str(c)])
-                #print(f"Z{c}:", Z.shape)
-                
-        #print("AC shape:",activations['A' + str(c)].shape)
-      
-        '''for key, value in activations.items():
-            print(f'{key}: {value.shape}')'''
-
         return activations
         
     # Backpropagation
     def back_propagation(self, y, activations, parametres):
         m = y.shape[1]
-        #print("m:", m)
         C = len(parametres) // 2
-        #print(f"A{C} shape:", activations['A' + str(C)].shape, " // y shape", y.shape)
         dZ = activations['A' + str(C)] - y
-        #print(f"A{C}:",activations['A' + str(C)].shape)
-        #print(y.shape)
-        #print("dZ:", dZ.shape)
-        
         gradients = {}
 
         for c in reversed(range(1, C+1)):
-            #print("c:",c)
-            #print("// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
             if c == C:
-                #print("C:", C)
-                #print("c:", c)
                 gradients['dW' + str(c)] = 1 / m * np.dot( dZ, activations['A' + str(c - 1)].T)
-                #print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
                 gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)
             elif c < C and c > 1:
-                #print("C:", C)
-                #print("c:", c)
                 gradients['dW' + str(c)] = 1 / m * np.dot(dZ, activations['A' + str(c - 1)].T)
-                #print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
                 gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)
             else:
-                #print("C:", C)
-                #print("c:", c)
                 gradients['dW' + str(c)] = 1 / m * np.dot(dZ, activations['A' + str(c - 1)].T)
-                #print(f"dW{c}:", gradients['dW' + str(c)].shape, "// dZ.T:", dZ.T.shape, "// A C - 1:", activations['A' + str(c - 1)].shape)
                 gradients['db' + str(c)] = 1 / m  * np.sum(dZ, axis=1, keepdims=True)                
-
             if c > 1:
-                #print(f"Wc:", (parametres['W' + str(c)].T).shape, "// dZ:", dZ.shape)
-                #print("A c - 1:", activations['A' + str(c - 1)].shape)
-                #a_terme = activations['A' + str(c - 1)].T * (1 - activations['A' + str(c - 1)].T)
-                #print("A terme:", a_terme.shape)
-                #toto = np.dot(parametres['W' + str(c)].T, dZ.T)
-                #print("toto:", toto.shape)
-                #multiplication matricielle entre dW et dZ et multiplications de terme a terme avec A et (1 - A)
                 dZ = np.dot(parametres['W' + str(c)].T, dZ) * activations['A' + str(c - 1)] * (1 - activations['A' + str(c - 1)])
-                #print("dZ toto:", dZ.shape)
         return gradients
     
-    #Parameters update
+    #Parameters update with C as number of layers
     def update(self, gradients, parametres, learning_rate):
         C = len(parametres) // 2
 
         for c in range(1, C+1):
-            if c == 1:
-                #print("C update:", C)
-                #print("c update:", c)
-                #print(f"W{c}:", parametres['W' + str(c)].shape, f"// dW{c}", gradients['dW' + str(c)].shape)
-                parametres['W' + str(c)] += - learning_rate *gradients['dW' + str(c)]
-                #print(f"b{c}:", parametres['b' + str(c)].shape, "// db{c}", gradients['db' + str(c)].shape)
-                parametres['b' + str(c)] += - learning_rate *gradients['db' + str(c)]
-            elif c > 1:
-                #print("C update:", C)
-                #print("c update:", c)
-                #print("learning_rate:", learning_rate)
-                #print(f"W{c}:", parametres['W' + str(c)].shape, f"// dW{c}", gradients['dW' + str(c)].shape)
-                parametres['W' + str(c)] += - learning_rate * gradients['dW' + str(c)]
-                #print(f"b{c}:", parametres['b' + str(c)].shape, "// db{c}", gradients['db' + str(c)].shape)
-                parametres['b' + str(c)] += - learning_rate *gradients['db' + str(c)]
-
+            parametres['W' + str(c)] += - learning_rate * gradients['dW' + str(c)]
+            parametres['b' + str(c)] += - learning_rate * gradients['db' + str(c)]
         return parametres
     
     # binary cross-entropy error function
     def log_loss(self, y, A):
         A = A[0]
-        #print("y shape", y.shape)
         leny = y.shape[1]
-        #print("A shape", A.shape)
-        #print("leny", leny)
         epsilon = 1e-15
         log_loss_ = 1 / leny * np.sum(-y * np.log(np.maximum(A, epsilon)) + (1 - y) * np.log(np.maximum(1 - A, epsilon)))
-
-        #print("log_loss:", log_loss_.shape)
         return log_loss_
     
+    # make the prediction from X as output layer and the parametres dictionary and return activation matrix as output
     def predict(self, X, parametres):
         activations = self.forward_propagation(X, parametres)
         C = len(parametres) // 2
-        #print("AActivation:", activations['A' + str(C)])
         Af = activations['A' + str(C)]
         Af = (Af > 0.5).astype(int)
-        #print("AActivation:", activations['A' + str(C)])
-        #print("Af:", Af)
-        #print("Af:", Af)
         return Af
     
     #New way to calculate accuracy
     def my_accuracy(self, y, y_predict):
-        #print("y_predic", y_predict.shape)
         correct_matches = 0
         total_samples = 0
         y_predict_first_column = y_predict[0, :]
         correct_matches = np.sum(y == y_predict_first_column)
-        #print("y shape", y.shape)
-        #print("y_predict shape", y_predict.shape)
-        #print("correct_matches:", correct_matches)
-        #print("y_predict", y_predict)
         total_samples = y.shape[1]
-        #print("total sample:", total_samples)
-        #print("y :", y.shape)
-        #print("len y:", len(y))
-        #print(y)
-        #print("total matches:", correct_matches)
         my_accuracy = 100 * correct_matches / total_samples
         return my_accuracy
     
-     #calculate accuracy in multilabel classification
+     #f1_score calculate accuracy in multilabel classification
     def f1_score(self, y, y_pred):
-        # Get the unique class labels
         y_prediction = np.array([y_pred[0,:]])
-        print("y:", y.shape)
-        print("y_predict:", y_prediction.shape)
         unique_classes = np.unique(np.concatenate((y, y_pred)))
-        print("unique_classes", unique_classes)
 
         # Initialize arrays to store precision, recall, and f1-score for each class
         precision_scores = []
@@ -258,7 +151,6 @@ class Multilayer:
             # Calculate the F1-score for the current class
             f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
 
-
             # Append the scores to the respective lists
             precision_scores.append(precision)
             recall_scores.append(recall)
@@ -267,20 +159,13 @@ class Multilayer:
         macro_precision = 100 *np.mean(precision_scores)
         macro_recall = 100 *np.mean(recall_scores)
         macro_f1_score = 100 * np.mean(f1_scores)
-
         return macro_f1_score, macro_recall, macro_precision
-
    
-    #@local_bar_processing
+    # mother funciton that launch the neural network
     def neural_network(self, X, y, parametres, learning_rate, n_iter):
 
-        #dimensions = list(hidden_layers)
-        #dimensions.insert(0, X.shape[0])
-        #print("X[1]", X.shape[0])
-        #dimensions.append(y.shape[0])
         np.random.seed(1)
-        #parametres = self.initialisation(dimensions)
-        
+     
         training_history = np.zeros((int(n_iter), 2))
         C = len(parametres) // 2    
         j = 0
@@ -291,16 +176,11 @@ class Multilayer:
             activations = self.forward_propagation(X, parametres)
             gradients = self.back_propagation(y, activations, parametres)
             parametres = self.update(gradients, parametres, learning_rate)
-            #Af = activations['A' + str(C)]
-            #print("Af", Af)
             y_pred = self.predict(X, parametres)
             training_history[i, 0] = (self.log_loss(y, y_pred))
-            
-            #print("y_pred:", y_pred.shape)
             training_history[i, 1] = (self.my_accuracy(y, y_pred))
-
         return training_history, parametres
-    
+
 
     #plot colors
     def plot_format(self):
@@ -320,14 +200,12 @@ class Multilayer:
             f"Precision: {f1_accuracy['macro_precision']:.2f}% \n"
             f"Test_accuracy: {f1_accuracy['test_accuracy']:.2f}% \n"
                        ]
-        #legend_label = f"{len_dimensions} layers \n"
         legend = plt.legend(label_lines,loc='center left', bbox_to_anchor=(1.0, 0.5), borderpad=1)
-        legend.get_frame().set_linewidth(0)  # Adjust the legend box border width
-        #legend.get_frame().set_edgecolor('black')  # Set the legend box border color
-        legend.get_frame().set_facecolor('lightblue')  # Set the legend box background color
+        legend.get_frame().set_linewidth(0)
+        legend.get_frame().set_facecolor('lightblue')
         legend.get_frame().set_alpha(0.3)
         for text in legend.get_texts():
-            text.set_fontsize(10)  # Adjust the legend font size
+            text.set_fontsize(10)
             text.set_color('blue')
 
     
@@ -337,7 +215,6 @@ class Multilayer:
         final_value = final_row[-1]
         title_lines =   [
 		f"Training set accuracy: {final_value:.2f}%"
-        #f"Test set accuracy : {f1_accuracy['test_accuracy']:.2f}%"
                         ]
         title = '\n'.join(title_lines)
 
@@ -385,15 +262,7 @@ def main():
     f1_accuracy['macro_recall'] = macro_recall
     f1_accuracy['macro_precision'] = macro_precision
     f1_accuracy['test_accuracy'] = test_accuracy
-    print("test_accuracy:", test_accuracy)
     ml.plot_presentation(training_history, f1_accuracy, len_dimensions)
 
-  
-    '''X = X / np.sum(X)
-    activations = ml.forward_propagation(X, parametres )
-    grad = ml.back_propagation(y, activations, parametres)'''
-    
-    '''for key, val in grad.items():
-        print(key, val.shape)'''
 if __name__ == "__main__":
     main()
