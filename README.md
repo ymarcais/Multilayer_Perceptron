@@ -1,3 +1,5 @@
+<img src="./f1_accuracy.png" alt="Alt text" title="Battle ship" style="display: inline-block; max-width: 20px">
+
 #Multilayer_Perceptron : accuracy 30%
   Machine Learning Neural Network
     Multi hidden layers
