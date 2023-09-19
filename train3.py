@@ -4,23 +4,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import sys
 import os
-'''lib_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib_py'))
-sys.path.append(lib_py_path)
-from bar_processing import bar_processing
-from gradient_descent import GradientDescent'''
-#from tqdm import tqdm
-#import time
 
-'''# Bar processing decorator
-def local_bar_processing(func):
-    def wrapper(*args, **kwargs):
-        progress_bar = tqdm(total=100, dynamic_ncols=True)
-        result = func(*args, **kwargs)
-        progress_bar.close()
-        return result
-    return wrapper'''
-
-@dataclass
 class Multilayer:
     
     '''Initialisation : dictionary for W: 'Weights' and b: 'bias' '''
