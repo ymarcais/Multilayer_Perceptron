@@ -43,7 +43,7 @@
   Trace how the cost function evolves from the last layer model to the first
   
   #Calculation partiale derivative derivative with respect to W[2] && derivative with respect to B[2] 
-    Z[1] = W[1].X + b[1]    (n1, n0) x (n0, m) + (n1, 1) // With boradcasting effect (n1, 1) becomes (n1, m)
+    Z[1] = W[1].X + b[1]    (n1, n0) x (n0, m) + (n1, 1) // With boradcasting effect (n1, 1) becomes (n1, m) 
     
     ∂Z[2] = (∂L / ∂A[2]) x (∂A[2] / ∂Z[2])
         (∂L / ∂A[2]) = (1 / m) x sum(((-Y / A[2]) + ((1 - y) / (1 - A[2]))))
